@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wzz.mapper.AttrMapper">
+
+	 <select id="select_attr_list" parameterType="int"
+	 			resultMap="select_attr_list_map">
+		select attr.id as attr_id,attr.*,val.id as val_id,val.* 
+		from t_mall_attr attr,t_mall_value val 
+		where attr.id = val.shxm_id and attr.flbh2 = #{flbh2} 
+	</select>
+	<resultMap type="cn.wzz.bean.OBJECT_T_MALL_ATTR" id="select_attr_list_map"
+				autoMapping="true">
+		<result column="attr_id" property="id"/>
+		<collection property="list_value" ofType="cn.wzz.bean.T_MALL_VALUE"
+					autoMapping="true">
+			<result column="val_id" property="id"/>
+		</collection>
+	</resultMap>
+	
+</mapper>

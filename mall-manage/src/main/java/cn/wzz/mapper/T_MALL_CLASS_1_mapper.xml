@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<!-- namespace：要实现的接口的全类名 -->
+<mapper namespace="cn.wzz.mapper.T_MALL_CLASS_1_mapper">
+
+	<select id="getList" resultType="cn.wzz.bean.T_MALL_CLASS_1">
+		select * from t_mall_class_1
+	</select>
+	
+</mapper>

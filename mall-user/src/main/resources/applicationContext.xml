@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+		http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+
+	<!-- 配置自动扫描的包 -->
+	<context:component-scan base-package="cn.wzz" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service" />
+	</context:component-scan>
+
+	<!-- 引入外部属性文件 -->
+	<context:property-placeholder location="classpath:dbConfig.properties" />
+	
+	<!-- 配置数据源 -->
+	<bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${url1}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	<!-- 使用两个数据源 -->
+	<bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${url2}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	<!-- 数据源路由器 -->
+	<bean id="dataSource" class="cn.wzz.util.MyRoutingDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="1" value-ref="dataSource1"></entry>
+				<entry key="2" value-ref="dataSource2"></entry>
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="dataSource1"></property>
+	</bean>
+	<!-- 整合MyBatis -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	</bean>
+	<mybatis-spring:scan base-package="cn.wzz.mapper"/>
+	
+	
+	<!-- 在Spring中启动了一个webservice的端点 -->
+	<!-- SOAP风格 -->
+	<jaxws:endpoint address="/login" implementorClass="cn.wzz.server.LoginServer">
+		<jaxws:implementor>
+			<bean class="cn.wzz.server.impl.LoginServerImpl"></bean>
+		</jaxws:implementor>
+	</jaxws:endpoint>
+	<!-- RestFul -->
+	<jaxrs:server address="/loginRest">
+		<jaxrs:serviceBeans>
+			<bean class="cn.wzz.server.impl.LoginServerImpl"></bean>
+		</jaxrs:serviceBeans>
+	</jaxrs:server>
+	
+	<bean id="myCallback" class="cn.wzz.util.MyCallback"></bean>
+	<!-- 安全拦截器 -->
+	<bean id="in" class="org.apache.cxf.ws.security.wss4j.WSS4JInInterceptor">
+		<constructor-arg>
+			<map key-type="java.lang.String">
+				<entry key="action" value="UsernameToken"></entry>
+				<entry key="passwordType" value="PasswordText"></entry>
+				<entry key="passwordCallbackRef" value-ref="myCallback"></entry>
+			</map>
+		</constructor-arg>
+	</bean>
+	<jaxws:endpoint address="/ws"
+		implementorClass="cn.wzz.server.TestServer">
+		<jaxws:inInterceptors>
+			<ref bean="in" />
+		</jaxws:inInterceptors>
+		<jaxws:implementor>
+			<bean class="cn.wzz.server.impl.TestServerImpl"></bean>
+		</jaxws:implementor>
+	</jaxws:endpoint>
+	
+	<jaxws:endpoint address="/address" implementorClass="cn.wzz.server.AddressServer">
+		<jaxws:implementor>
+			<bean class="cn.wzz.server.impl.AddressServerImpl"></bean>
+		</jaxws:implementor>
+	</jaxws:endpoint>
+	
+</beans>
